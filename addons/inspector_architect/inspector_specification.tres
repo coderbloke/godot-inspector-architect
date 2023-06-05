@@ -1,9 +1,9 @@
 [gd_resource type="Resource" script_class="InspectorSpecification" load_steps=10 format=3 uid="uid://bdvmtuj1l8rbm"]
 
 [ext_resource type="Script" path="res://addons/inspector_architect/specification/InspectorSpecification.gd" id="1_1x0q6"]
-[ext_resource type="Script" path="res://addons/inspector_architect/specification/InspectorPluginSpecification.gd" id="3_8j3gy"]
 [ext_resource type="Script" path="res://addons/inspector_architect/specification/InspectorObjectFilter.gd" id="3_jaumh"]
 [ext_resource type="Script" path="res://addons/inspector_architect/specification/InspectorInsertPosition.gd" id="4_a1laa"]
+[ext_resource type="Script" path="res://addons/inspector_architect/specification/InspectorObjectEditorSpecification.gd" id="4_aoguv"]
 [ext_resource type="Script" path="res://addons/inspector_architect/specification/InspectorParseAction.gd" id="5_n4nkb"]
 
 [sub_resource type="Resource" id="Resource_qvnub"]
@@ -28,7 +28,7 @@ action_trigger = SubResource("Resource_4rscr")
 action = "query_trigger_button.disabled = object.overpass_query_builder == null or object.overpass_query == null"
 
 [sub_resource type="Resource" id="Resource_lxqj3"]
-script = ExtResource("3_8j3gy")
+script = ExtResource("4_aoguv")
 declarations = ""
 initialization = ""
 object_filter = SubResource("Resource_qvnub")
@@ -36,4 +36,4 @@ parse_actions = Array[ExtResource("5_n4nkb")]([SubResource("Resource_vbd5b")])
 
 [resource]
 script = ExtResource("1_1x0q6")
-plugins = Array[ExtResource("3_8j3gy")]([SubResource("Resource_lxqj3")])
+plugins = Array[ExtResource("4_aoguv")]([SubResource("Resource_lxqj3")])

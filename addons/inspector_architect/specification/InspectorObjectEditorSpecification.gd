@@ -1,5 +1,5 @@
 @tool
-class_name InspectorPluginSpecification extends Resource
+class_name InspectorObjectEditorSpecification extends Resource
 
 @export_multiline var declarations: String = "":
 	set(value):

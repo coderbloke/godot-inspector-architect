@@ -1,8 +1,8 @@
 @tool
 class_name InspectorSpecification extends Resource
 
-var connected_plugins: Array[InspectorPluginSpecification] = []
-@export var plugins: Array[InspectorPluginSpecification] = []:
+var connected_plugins: Array[InspectorObjectEditorSpecification] = []
+@export var plugins: Array[InspectorObjectEditorSpecification] = []:
 	set(value):
 		if plugins != null:
 			for connected_plugin in connected_plugins:
