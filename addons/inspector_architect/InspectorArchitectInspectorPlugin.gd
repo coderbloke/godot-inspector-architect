@@ -32,7 +32,7 @@ func _property_description_to_string(p: Dictionary):
 	return "name = \"%s\", class_name = \"%s\", type = %s" % [p.name, p["class_name"], InspectorArchitect.enum_to_string(InspectorArchitect.VariantType, p.type)] \
 			+ ", hint = %s, hint_string = \"%s\"" % [InspectorArchitect.enum_to_string(InspectorArchitect.PropertyHint, p.get("hint", 0)), p.get("hint_string", "")] \
 			+ ", usage = %s" % [InspectorArchitect.flags_to_string(InspectorArchitect.PropertyUsageFlags, p.get("usage", 0))]
- 
+
 func _get_bbcode_cells(cell_contents: PackedStringArray):
 	var s = ""
 	for cell_content in cell_contents:
@@ -50,7 +50,7 @@ func _property_list_to_table(property_list: Array[Dictionary]):
 		"class_start",
 		"label",
 		"path"
-	] 
+	]
 	var s = "[table=%d]%s" % [header.size(), _get_bbcode_cells(header)]
 	var indent := ""
 	for p in property_list:
@@ -80,11 +80,11 @@ func _property_list_to_table(property_list: Array[Dictionary]):
 			indent = "- "
 	s += "[/table]"
 	return s
- 
+
 func _get_reversed_property_list(object: Object, add_additional_info: bool = true) -> Array[Dictionary]:
 	var original_list := object.get_property_list()
 	# get_property_list exposed to GDScript list propertyies like this:
-	# - Properties of the built-in class from base class to subclass 
+	# - Properties of the built-in class from base class to subclass
 	# - Then properties of script classes from subclass to base class
 	# In inspector the order is
 	# - Properties of script classes from subclass to base class
@@ -121,7 +121,7 @@ func _get_reversed_property_list(object: Object, add_additional_info: bool = tru
 		class_property_list.append(property)
 	class_property_list.append_array(reversed_list)
 	return class_property_list
-	
+
 func _is_type_recognized(type: String):
 	# Function coming from EditroData.cpp. No cue set if the commented part of the condition can be done via exposed methods
 	return ClassDB.class_exists(type) # or ScriptServer.is_global_class(type) or get_custom_type_by_name(type)
@@ -135,17 +135,17 @@ func _get_script_class_name(script: Script) -> String:
 func _get_current_feature_profile() -> EditorFeatureProfile:
 	if main_plugin == null:
 		return null
-		
+
 	var editor_settings = main_plugin.get_editor_interface().get_editor_settings()
 	var profile_name = editor_settings.get("_default_feature_profile")
-	
+
 	var editor_paths = EditorPaths.new()
 	var config_dir = editor_paths.get_config_dir()
 	var profile_path = config_dir.path_join("feature_profiles").path_join(profile_name + ".profile")
-	
+
 	var profile := EditorFeatureProfile.new()
 	profile.load_from_file(profile_path)
-	
+
 	return profile
 
 func _is_gfx_low_end() -> bool:
@@ -168,7 +168,7 @@ func _is_property_disabled_by_feature_profile(object: Object, property: StringNa
 		object_class = ClassDB.get_parent_class(object_class)
 
 	return false
-	
+
 func _call_method_if_exists(object: Object, method_name: String, default_retval: Variant = null):
 	if object.has_method(method_name):
 		return object.call(method_name)
@@ -348,7 +348,7 @@ const capitalize_string_remaps = {
 	"yz": "YZ",
 }
 
-# Source: editor_property_name_processor.cpp / stop_words 
+# Source: editor_property_name_processor.cpp / stop_words
 const stop_words: PackedStringArray = [
 		"a",
 		"an",
@@ -398,28 +398,57 @@ class _PropertyContainer: # Helper class to substitute VBoxContainer from inspec
 	var name: String
 	var label: String
 	var owner: Dictionary
-	var elements: Array[Dictionary]
+	var elements: Array # Dictionary for properties, _PropertyContainer for arrays
 	func _init(owner, name: String, label: String, level: int):
 		if owner != null:
 			self.owner = owner
+		self.name = name
 		self.label = label
 		self.level = level
+		
+func _get_container_elements_debug_info(elements: Array):
+	var s := ""
+	for e in elements:
+		if not s.is_empty():
+			s += ", "
+		s += e.name
+		if e is _PropertyContainer:
+			s += "[]"
+	if s.is_empty():
+		s += "-"
+	return s
+
+func _print_container_debug_info(log: DebugInfoLog, container: _PropertyContainer, container_label_prefix: String):
+	var s = _get_container_elements_debug_info(container.elements)
+	s = container_label_prefix + container.label + ": " + s
+	var indent := ""
+	for i in container.level: indent += "  "
+	log.print_colored("Lightgreen", "\t" + indent + " - " + s)
+	for e in container.elements:
+		if e is _PropertyContainer:
+			_print_container_debug_info(log, e, "")
+	
+	
+func _print_containers_debug_info(log: DebugInfoLog, containers: Array[_PropertyContainer]):
+	for container in containers:
+		var container_label_prefix := "(" + str(containers.find(container)) + ") "
+		_print_container_debug_info(log, container, container_label_prefix)
 
 func _get_inspector_property_list(object: Object, add_additional_info: bool = true):
 	var log := DebugInfo.get_log("inspector_architect", "Inspector Architect")
 	log.clear()
-#	log.redirect_to_main_console = true
+	log.redirect_to_main = true
 #	var separator := ""
 #	for i in 100: separator += "\u2550"
 #	log.print(separator)
-	
+
 	var restrict_to_basic := false # Used in condition, but no clue where it comes from, in original code, it can be set by setter
-	var filter := "" # Also no clue yet, if it is accesible from here 
+	var filter := "" # Also no clue yet, if it is accesible from here
 	var use_filter := false # Simply a private field of inspector, with this value given in editor_inspector.h
 	var use_folding := false # Simply a private field of inspector, with this value given in editor_inspector.h (don't know who sets it to true later)
 	var read_only := false # Simply a private field of inspector, with this value given in editor_inspector.h (don't know who sets it to true later)
 	var hide_script = false # Simply a property of the inspector class in Godot engine code
-		
+
 	var feature_profile := _get_current_feature_profile()
 	var gfx_is_low_end := _is_gfx_low_end()
 
@@ -439,16 +468,19 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 	var subgroup: String = ""
 	var subgroup_base: String = ""
 	var section_depth := 0
-	
-	var category_container_index := -1 # In inspector's code: VBoxContainer *category_vbox = nullptr;
+
+	var category_container: _PropertyContainer = null # In inspector's code: VBoxContainer *category_vbox = nullptr;
 	var containers: Array[_PropertyContainer] = [] # In inspector code: main_vbox
 	var container_per_path := { } # In inspector's code: HashMap<VBoxContainer *, HashMap<String, VBoxContainer *>> vbox_per_path;
 	var array_per_prefix := { } # In inspector's code: HashMap<String, EditorInspectorArray *>
-	
+
+	var script_category_container: _PropertyContainer = null
+	var metadata_category_container: _PropertyContainer = null
+
 	var category_property: Dictionary
 	var group_property: Dictionary
 	var subgroup_property: Dictionary
-	
+
 	var properties_to_end: Array[Dictionary] = []
 	for p in property_list:
 		if p.name == "script":
@@ -462,32 +494,20 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 	for p in properties_to_end:
 		property_list.erase(p)
 		property_list.append(p)
-	
+
 	for p in property_list:
 		if add_additional_info:
 			p["label"] = p.name
 			p["path"] = ""
 
 		log.print_colored("Lightgreen", "\tContainers:" + (" none" if containers.size() == 0 else ""))
-		for container in containers:
-			var s := ""
-			for e in container.elements:
-				if not s.is_empty():
-					s += ", "
-				s += e.name
-			if s.is_empty():
-				s += "[empty]"
-			s = "(" + str(containers.find(container)) + ") " + container.label + ": " + s
-			var indent := ""
-			for i in container.level: indent += "  "
-			log.print_colored("Lightgreen", "\t" + indent + " - " + s)
-
+		_print_containers_debug_info(log, containers)
 		log.print_colored("Lightslategray" ,"(%d) %s" % [property_list.find(p), _property_description_to_string(p)])
-		
+
 		if p.usage & PROPERTY_USAGE_SUBGROUP != 0:
 			subgroup = p.name
 			var hint_parts = p.hint_string.split(",")
-			subgroup_base = hint_parts[0] if hint_parts.size() >= 0 else "" 
+			subgroup_base = hint_parts[0] if hint_parts.size() >= 0 else ""
 			# Inspector's source read section depth here from hint_part[1] (or 0 by default).
 			# We don't do it (yet), as it seems its only used for GUI purposes
 			subgroup_property = p
@@ -495,7 +515,7 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 		if p.usage & PROPERTY_USAGE_GROUP != 0:
 			group = p.name
 			var hint_parts = p.hint_string.split(",")
-			group_base = hint_parts[0] if hint_parts.size() >= 0 else "" 
+			group_base = hint_parts[0] if hint_parts.size() >= 0 else ""
 			subgroup = ""
 			subgroup_base = ""
 			# Inspector's source read section depth here from hint_part[1] (or 0 by default).
@@ -510,7 +530,7 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 			# In inspector's code: Continue, if show_cetagories is false.
 			# In inspector's code: Continue, if it's the "MultiNodeEdit" category of MultiNodeEdit
 			# In inspector's code: Check if category is empty, and continue (skip it). Let's check this in the end.
-			
+
 			# Below from condition we skip the original is_type_recognized part, as it is not implemented here correctly
 			if p.hint_string.length() > 0 and ResourceLoader.exists(p.hint_string):
 				var scr := ResourceLoader.load(p.hint_string) as Script
@@ -520,7 +540,7 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 						p["label"] = script_class_name
 			# As last steps inspector's course code deal with icons and documetation here.
 			# We skip it, as we don't need those (yet)
-			category_container_index = -1
+			category_container = null
 			category_property = p
 			continue
 		if p.name.begins_with("metadata/_"):
@@ -530,34 +550,49 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 				or _is_property_disabled_by_feature_profile(object, p.name, feature_profile) \
 				or (filter == "" and restrict_to_basic and p.usage & PROPERTY_USAGE_EDITOR_BASIC_SETTING != 0):
 			continue
-			
-		# Below code does not work for us, so put property to end of list, is done in advance
-		if p.name == "script":
-			# Script should go into its own category.
-			category_container_index = -1
-			
+
 		if p.usage & PROPERTY_USAGE_HIGH_END_GFX != 0 and gfx_is_low_end:
 			# Do not show this property in low end gfx.
 			continue;
-			
+
 		if p.name == "script" and (hide_script or _call_method_if_exists(object, "_hide_script_from_inspector", false) == true):
 			# Hide script variables from inspector if required.
 			continue
-	
+
 		if p.name.begins_with("metadata/") and _call_method_if_exists(object, "_hide_metadata_from_inspector", false) == true:
 			# Hide metadata from inspector if required.
 			continue
-			
+
+		if p.name == "script":
+			# Script should go into its own category
+			# In inspector's code, it is simly reset the category container, and let latr code to make it.
+			# We make an explicit one, to keep the structure.
+			# (Other wise script would go to the last category, which is usually Node or RefCount)
+			if script_category_container == null:
+				script_category_container = _PropertyContainer.new(null, "", "", 0)
+				containers.append(script_category_container)
+			category_container = script_category_container
+
+		# Below code is not done by inspector's source, but didn't find where it solve to put metadata to the end
+		if p.name.begins_with("metadata/"):
+			if metadata_category_container == null:
+				metadata_category_container = _PropertyContainer.new(null, "", "", 0)
+				containers.append(metadata_category_container)
+			category_container = metadata_category_container
+
 		var path: String = p.name
 		var path_owner: Array[Dictionary] = [p]
-		
-		# Not sure that array handling is needed for us now, but it's done for sure
+
 		var array_prefix := ""
 		var array_index := -1
+		log.print("\tarray_per_prefix.keys = " + str(array_per_prefix.keys()))
+		for key in array_per_prefix:
+			log.print("\t\t" + key + " -> " + str(array_per_prefix[key]))
 		for key in array_per_prefix:
 			if p.name.begins_with(key) and key.length() > array_prefix.length():
 				array_prefix = key
-		
+				log.print("\tarray_prefix = %s" % array_prefix)
+
 		if not array_prefix.is_empty():
 			var str: String = p.name.trim_prefix(array_prefix)
 			var to_char_index := 0
@@ -567,8 +602,10 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 				to_char_index += 1
 			if to_char_index > 0:
 				array_index = str.left(to_char_index).to_int();
+				log.print("\tarray_index = %s" % array_index)
 			else:
 				array_prefix = "";
+				log.print("\tarray_prefix = %s (as no index found)" % array_prefix)
 
 		if not array_prefix.is_empty():
 			path = path.trim_prefix(array_prefix)
@@ -576,7 +613,7 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 			if char_index >= 0:
 				path = path.right(-char_index - 1)
 			else:
-				path = "Element %s" % array_index
+				path = &"Element %s" % array_index
 		else:
 			# Check if we exit or not a subgroup. If there is a prefix, remove it from the property label string.
 			if not subgroup.is_empty() and not subgroup_base.is_empty():
@@ -634,31 +671,36 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 			var property_path := property_prefix + ("" if path.is_empty() else path + "/") + name_override;
 			if not _property_path_matches(property_path, filter):
 				continue
-				
+
 		# Recreate the category container if it was reset.
-		if category_container_index < 0:
-			var category_container := _PropertyContainer.new(category_property, category_property.name, category_property.label, 0)
+		if category_container == null:
+			category_container = _PropertyContainer.new(category_property, category_property.name, category_property.label, 0)
 			containers.append(category_container)
-			category_container_index = containers.size() - 1
 
 		# Find the correct section/vbox to add the property editor to.
 		var root_container: _PropertyContainer
 		if array_prefix.is_empty():
-			root_container = containers[category_container_index]
+			root_container = category_container
+			log.print("\troot_container = category_container = (%s) %s" % [containers.find(root_container), root_container])
 		else:
 			if array_per_prefix.has(array_prefix):
 				root_container = array_per_prefix[array_prefix]
+				log.print("\troot_container = array_per_prefix[array_prefix] = (%s) %s" % [containers.find(root_container), root_container])
 			else:
 				continue
 
 		if not container_per_path.has(root_container):
 			container_per_path[root_container] = { }
 			container_per_path[root_container][""] = root_container
+		
+		for container_key in container_per_path:
+			for path_key in container_per_path[container_key]:
+				log.print("\tcontainer_key[%d][\"%s\"] = %s" % [container_key.get_instance_id(), path_key, container_per_path[container_key][path_key]])
 
 		var current_container := root_container
 		var acc_path := ""
 		var level := 1
-		
+
 		var components := path.split("/")
 		for i in components.size():
 			var component := components[i]
@@ -668,17 +710,16 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 				# We just make a new container
 				var label := _capitalize_property_name(component)
 				container_per_path[root_container][acc_path] = _PropertyContainer.new(path_owner[i] if i < path_owner.size() else null, component, label, level)
+				log.print("\t-> container_key[%d][\"%s\"] = %s" % [root_container.get_instance_id(), acc_path, "new"])
 				containers.append(container_per_path[root_container][acc_path])
-			
+
+			log.print("\t<- root_container = %d, acc_path = \"%s\"" % [root_container.get_instance_id(), acc_path])
 			current_container = container_per_path[root_container][acc_path]
 			#level = min(level + 1, 4)
 			level = level + 1 # We do not restrict as inspector's code, as we use it to recover full structure, and not for GUI formatting
-			
-		if current_container == root_container:
-			current_container = containers[category_container_index]
-			
-		log.print("\tcurrent_container = (%d)" % containers.find(current_container))
-			
+
+		log.print("\tcurrent_container = (%d) %s" % [containers.find(current_container), current_container])
+
 		if p.usage & PROPERTY_USAGE_ARRAY != 0:
 			# In inspector code here comes the setup for the editor of the array
 			# GUI element creation is not brought here, but processing the property inof replicated,
@@ -714,60 +755,48 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 			if p.type == TYPE_NIL:
 				array_element_prefix = class_name_components[0]
 				var array_label = _capitalize_property_name(property_label_string)
-				log.print("array_element_prefix = %s" % array_element_prefix)
-				log.print("array_label = %s" % array_label)
+				log.print("\tarray_element_prefix = %s" % array_element_prefix)
+				log.print("\tarray_label = %s" % array_label)
 				add_to_list = true
 			elif p.type == TYPE_INT:
 				if class_name_components.size() >= 2:
 					array_element_prefix = class_name_components[1]
-					log.print("array_element_prefix = %s" % array_element_prefix)
+					log.print("\tarray_element_prefix = %s" % array_element_prefix)
 					add_to_list = true
-			
+
 			if add_to_list:
-				current_container.append(p)
-				array_per_prefix[array_element_prefix] = p
-				
+				var array_container := _PropertyContainer.new(p, p.name, p.label, level)
+				current_container.elements.append(array_container)
+				array_per_prefix[array_element_prefix] = array_container
+
 			continue
-				
+
 		# These one again not used, but put here, to remember and see what inspector code processes, once it's needed
 		var checkable := false
 		var checked := false
 		if p.usage & PROPERTY_USAGE_CHECKABLE != 0:
 			checkable = true
 			checked = (p.usage & PROPERTY_USAGE_CHECKED != 0)
-			
+
 		var property_read_only = (p.usage & PROPERTY_USAGE_READ_ONLY) != 0 or read_only
 
 		# Mark properties that would require an editor restart (mostly when editing editor settings).
 		if p.usage & PROPERTY_USAGE_RESTART_IF_CHANGED != 0:
 			#restart_request_props.insert(p.name)
 			pass
-			
+
 		# Here comes a huge code part in inspector's source dealing with docs
-		
+
 		# And here comes the code in inspector'ss oruce, where it chooses a property aditor
-		
-		log.print("\t* current_container = (%d)" % containers.find(current_container))
+
+		log.print("\t*current_container = (%d) %s" % [containers.find(current_container), current_container])
 		current_container.elements.append(p)
 
+	_print_containers_debug_info(log, containers)
 
-	log.print_colored("Lightgreen", "\tContainers:" + (" none" if containers.size() == 0 else ""))
-	for container in containers:
-		var s := ""
-		for e in container.elements:
-			if not s.is_empty():
-				s += ", "
-			s += e.name
-		if s.is_empty():
-			s += "[empty]"
-		s = "(" + str(containers.find(container)) + ") " + container.label + ": " + s
-		var indent := ""
-		for i in container.level: indent += "  "
-		log.print_colored("Lightgreen", "\t" + indent + " - " + s)
-		
 	# TODO: put property list together from containers
 #	inspector_property_list.append_array(end_of_list_exceptions)
-	
+
 	log.print_rich(_property_list_to_table(inspector_property_list))
 	return property_list
 
