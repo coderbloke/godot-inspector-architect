@@ -393,10 +393,25 @@ static func _property_path_matches(property_path: String, filter: String) -> boo
 			return true
 	return false
 
+class _PropertyContainer: # Helper class to substitute VBoxContainer from inspector's code
+	var level: int
+	var name: String
+	var label: String
+	var owner: Dictionary
+	var elements: Array[Dictionary]
+	func _init(owner, name: String, label: String, level: int):
+		if owner != null:
+			self.owner = owner
+		self.label = label
+		self.level = level
+
 func _get_inspector_property_list(object: Object, add_additional_info: bool = true):
-	
 	var log := DebugInfo.get_log("inspector_architect", "Inspector Architect")
 	log.clear()
+#	log.redirect_to_main_console = true
+#	var separator := ""
+#	for i in 100: separator += "\u2550"
+#	log.print(separator)
 	
 	var restrict_to_basic := false # Used in condition, but no clue where it comes from, in original code, it can be set by setter
 	var filter := "" # Also no clue yet, if it is accesible from here 
@@ -426,34 +441,56 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 	var section_depth := 0
 	
 	var category_container_index := -1 # In inspector's code: VBoxContainer *category_vbox = nullptr;
-	var containers := [] # In inspector code: main_vbox
+	var containers: Array[_PropertyContainer] = [] # In inspector code: main_vbox
 	var container_per_path := { } # In inspector's code: HashMap<VBoxContainer *, HashMap<String, VBoxContainer *>> vbox_per_path;
 	var array_per_prefix := { } # In inspector's code: HashMap<String, EditorInspectorArray *>
+	
+	var category_property: Dictionary
+	var group_property: Dictionary
+	var subgroup_property: Dictionary
+	
+	var properties_to_end: Array[Dictionary] = []
+	for p in property_list:
+		if p.name == "script":
+			properties_to_end.append(p)
+	for p in properties_to_end:
+		property_list.erase(p)
+		property_list.append(p)
+	for p in property_list:
+		if p.name.begins_with("metadata/"):
+			properties_to_end.append(p)
+	for p in properties_to_end:
+		property_list.erase(p)
+		property_list.append(p)
 	
 	for p in property_list:
 		if add_additional_info:
 			p["label"] = p.name
 			p["path"] = ""
-		log.print_colored("Lightslategray" ,"%s" % [_property_description_to_string(p)])
-		
+
 		log.print_colored("Lightgreen", "\tContainers:" + (" none" if containers.size() == 0 else ""))
 		for container in containers:
 			var s := ""
-			for e in container:
+			for e in container.elements:
 				if not s.is_empty():
 					s += ", "
 				s += e.name
 			if s.is_empty():
 				s += "[empty]"
-			s = "(" + str(containers.find(container)) + ") " + s
-			log.print_colored("Lightgreen", "\t - " + s)
+			s = "(" + str(containers.find(container)) + ") " + container.label + ": " + s
+			var indent := ""
+			for i in container.level: indent += "  "
+			log.print_colored("Lightgreen", "\t" + indent + " - " + s)
 
+		log.print_colored("Lightslategray" ,"(%d) %s" % [property_list.find(p), _property_description_to_string(p)])
+		
 		if p.usage & PROPERTY_USAGE_SUBGROUP != 0:
 			subgroup = p.name
 			var hint_parts = p.hint_string.split(",")
 			subgroup_base = hint_parts[0] if hint_parts.size() >= 0 else "" 
 			# Inspector's source read section depth here from hint_part[1] (or 0 by default).
 			# We don't do it (yet), as it seems its only used for GUI purposes
+			subgroup_property = p
 			continue
 		if p.usage & PROPERTY_USAGE_GROUP != 0:
 			group = p.name
@@ -463,6 +500,7 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 			subgroup_base = ""
 			# Inspector's source read section depth here from hint_part[1] (or 0 by default).
 			# We don't do it (yet), as it seems its only used for GUI purposes
+			group_property = p
 			continue
 		if p.usage & PROPERTY_USAGE_CATEGORY != 0:
 			group = ""
@@ -482,6 +520,8 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 						p["label"] = script_class_name
 			# As last steps inspector's course code deal with icons and documetation here.
 			# We skip it, as we don't need those (yet)
+			category_container_index = -1
+			category_property = p
 			continue
 		if p.name.begins_with("metadata/_"):
 			continue;
@@ -491,10 +531,10 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 				or (filter == "" and restrict_to_basic and p.usage & PROPERTY_USAGE_EDITOR_BASIC_SETTING != 0):
 			continue
 			
+		# Below code does not work for us, so put property to end of list, is done in advance
 		if p.name == "script":
 			# Script should go into its own category.
 			category_container_index = -1
-			continue
 			
 		if p.usage & PROPERTY_USAGE_HIGH_END_GFX != 0 and gfx_is_low_end:
 			# Do not show this property in low end gfx.
@@ -509,6 +549,7 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 			continue
 			
 		var path: String = p.name
+		var path_owner: Array[Dictionary] = [p]
 		
 		# Not sure that array handling is needed for us now, but it's done for sure
 		var array_prefix := ""
@@ -559,8 +600,10 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 			# Add the group and subgroup to the path.
 			if not subgroup.is_empty():
 				path = subgroup + "/" + path
+				path_owner.push_front(subgroup_property)
 			if not group.is_empty():
 				path = group + "/" + path
+				path_owner.push_front(group_property)
 
 		log.print("\tpath = %s" % path)
 		p["path"] = p.path
@@ -574,15 +617,17 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 			name_override = name_override.substr(0, dot);
 
 		var property_label_string = _capitalize_property_name(name_override) + feature_tag;
-		log.print("\tproperty_label_string = %s" % property_label_string)
+		log.print_rich("\tproperty_label_string = [b]%s[/b]" % property_label_string)
 		p["label"] = property_label_string
 
 		# Remove the property from the path.
 		var idx := path.rfind("/")
 		if idx > -1:
 			path = path.left(idx)
+			path_owner.remove_at(path_owner.size() - 1)
 		else:
 			path = ""
+			path_owner = []
 
 		# Ignore properties that do not fit the filter.
 		if use_filter && not filter.is_empty():
@@ -592,26 +637,25 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 				
 		# Recreate the category container if it was reset.
 		if category_container_index < 0:
-			var category_container = []
+			var category_container := _PropertyContainer.new(category_property, category_property.name, category_property.label, 0)
 			containers.append(category_container)
 			category_container_index = containers.size() - 1
 
 		# Find the correct section/vbox to add the property editor to.
-		var root_container
+		var root_container: _PropertyContainer
 		if array_prefix.is_empty():
+			root_container = containers[category_container_index]
+		else:
 			if array_per_prefix.has(array_prefix):
 				root_container = array_per_prefix[array_prefix]
 			else:
 				continue
-		else:
-			root_container = containers
 
 		if not container_per_path.has(root_container):
 			container_per_path[root_container] = { }
 			container_per_path[root_container][""] = root_container
 
-		var current_container = root_container
-		log.print_colored("Lightgreen", "\tCurrent container:" + (" none" if containers.size() == 0 else ""))
+		var current_container := root_container
 		var acc_path := ""
 		var level := 1
 		
@@ -622,13 +666,18 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 			if not container_per_path[root_container].has(acc_path):
 				# In inspector's code, here comes, the code which setup the label for the category/group
 				# We just make a new container
-				container_per_path[root_container][acc_path] = []
+				var label := _capitalize_property_name(component)
+				container_per_path[root_container][acc_path] = _PropertyContainer.new(path_owner[i] if i < path_owner.size() else null, component, label, level)
+				containers.append(container_per_path[root_container][acc_path])
 			
 			current_container = container_per_path[root_container][acc_path]
-			level = min(level + 1, 4)
+			#level = min(level + 1, 4)
+			level = level + 1 # We do not restrict as inspector's code, as we use it to recover full structure, and not for GUI formatting
 			
 		if current_container == root_container:
 			current_container = containers[category_container_index]
+			
+		log.print("\tcurrent_container = (%d)" % containers.find(current_container))
 			
 		if p.usage & PROPERTY_USAGE_ARRAY != 0:
 			# In inspector code here comes the setup for the editor of the array
@@ -678,27 +727,44 @@ func _get_inspector_property_list(object: Object, add_additional_info: bool = tr
 				current_container.append(p)
 				array_per_prefix[array_element_prefix] = p
 				
-			# These one again not used, but put here, to remember and see what inspector code processes, once it's needed
-			var checkable := false
-			var checked := false
-			if p.usage & PROPERTY_USAGE_CHECKABLE != 0:
-				checkable = true
-				checked = (p.usage & PROPERTY_USAGE_CHECKED != 0)
+			continue
 				
-			var property_read_only = (p.usage & PROPERTY_USAGE_READ_ONLY) != 0 or read_only
-
-			# Mark properties that would require an editor restart (mostly when editing editor settings).
-			if p.usage & PROPERTY_USAGE_RESTART_IF_CHANGED != 0:
-				#restart_request_props.insert(p.name)
-				pass
-				
-			# Here comes a huge code part in inspector's source dealing with docs
+		# These one again not used, but put here, to remember and see what inspector code processes, once it's needed
+		var checkable := false
+		var checked := false
+		if p.usage & PROPERTY_USAGE_CHECKABLE != 0:
+			checkable = true
+			checked = (p.usage & PROPERTY_USAGE_CHECKED != 0)
 			
-			# And here comes the code in inspector'ss oruce, where it chooses a property aditor
+		var property_read_only = (p.usage & PROPERTY_USAGE_READ_ONLY) != 0 or read_only
+
+		# Mark properties that would require an editor restart (mostly when editing editor settings).
+		if p.usage & PROPERTY_USAGE_RESTART_IF_CHANGED != 0:
+			#restart_request_props.insert(p.name)
+			pass
 			
-			current_container.append(p)
+		# Here comes a huge code part in inspector's source dealing with docs
+		
+		# And here comes the code in inspector'ss oruce, where it chooses a property aditor
+		
+		log.print("\t* current_container = (%d)" % containers.find(current_container))
+		current_container.elements.append(p)
 
 
+	log.print_colored("Lightgreen", "\tContainers:" + (" none" if containers.size() == 0 else ""))
+	for container in containers:
+		var s := ""
+		for e in container.elements:
+			if not s.is_empty():
+				s += ", "
+			s += e.name
+		if s.is_empty():
+			s += "[empty]"
+		s = "(" + str(containers.find(container)) + ") " + container.label + ": " + s
+		var indent := ""
+		for i in container.level: indent += "  "
+		log.print_colored("Lightgreen", "\t" + indent + " - " + s)
+		
 	# TODO: put property list together from containers
 #	inspector_property_list.append_array(end_of_list_exceptions)
 	
