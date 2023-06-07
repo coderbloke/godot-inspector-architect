@@ -21,19 +21,19 @@ class_name InspectorObjectEditorSpecification extends Resource
 		if object_filter != null:
 			object_filter.changed.connect(emit_changed)
 
-var connected_actions: Array[InspectorParseAction] = []
+var _connected_actions: Array[InspectorParseAction] = []
 @export var parse_actions: Array[InspectorParseAction] = []:
 	set(value):
 		if parse_actions != null:
-			for connected_action in connected_actions:
+			for connected_action in _connected_actions:
 				connected_action.changed.disconnect(emit_changed)
-			connected_actions.clear()
+			_connected_actions.clear()
 		parse_actions = value
 		if parse_actions != null:
 			for child in parse_actions:
 				if child == null:
 					continue
 				child.changed.connect(emit_changed)
-				connected_actions.append(child)
+				_connected_actions.append(child)
 
 
