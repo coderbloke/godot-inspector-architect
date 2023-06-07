@@ -1,0 +1,83 @@
+[gd_resource type="Resource" script_class="CodeGeneratorSpecification" load_steps=11 format=3 uid="uid://rqvqyh5lmwh6"]
+
+[ext_resource type="Script" path="res://addons/inspector_architect/generator/CodeGeneratorSpecification.gd" id="1_0kusa"]
+[ext_resource type="Script" path="res://addons/inspector_architect/generator/CodeGeneratorTemplateAction.gd" id="2_fxh7q"]
+
+[sub_resource type="Resource" id="Resource_x6kyc"]
+script = ExtResource("2_fxh7q")
+tag = "_DECLARATIONS_"
+comment_handling = 0
+action_method = "_get_declarations"
+prefix_handling = 0
+additional_indent = 0
+suffix_handling = 0
+
+[sub_resource type="Resource" id="Resource_vloe5"]
+script = ExtResource("2_fxh7q")
+tag = "_INITIALIZATION_"
+comment_handling = 0
+action_method = "_get_initialization"
+prefix_handling = 0
+additional_indent = 0
+suffix_handling = 0
+
+[sub_resource type="Resource" id="Resource_lgbvf"]
+script = ExtResource("2_fxh7q")
+tag = "_CAN_HANDLE_"
+comment_handling = 0
+action_method = "_get_can_handle"
+prefix_handling = 0
+additional_indent = 0
+suffix_handling = 0
+
+[sub_resource type="Resource" id="Resource_w7sv4"]
+script = ExtResource("2_fxh7q")
+tag = "_PARSE_BEGIN_"
+comment_handling = 0
+action_method = "_get_parse_begin"
+prefix_handling = 0
+additional_indent = 0
+suffix_handling = 0
+
+[sub_resource type="Resource" id="Resource_1onc5"]
+script = ExtResource("2_fxh7q")
+tag = "_PARSE_CATEGORY_"
+comment_handling = 0
+action_method = "_get_parse_category"
+prefix_handling = 0
+additional_indent = 0
+suffix_handling = 0
+
+[sub_resource type="Resource" id="Resource_msgmg"]
+script = ExtResource("2_fxh7q")
+tag = "_PARSE_END_"
+comment_handling = 0
+action_method = "_get_parse_end"
+prefix_handling = 0
+additional_indent = 0
+suffix_handling = 0
+
+[sub_resource type="Resource" id="Resource_gmu4u"]
+script = ExtResource("2_fxh7q")
+tag = "_PARSE_GROUP_"
+comment_handling = 0
+action_method = "_get_parse_group"
+prefix_handling = 0
+additional_indent = 0
+suffix_handling = 0
+
+[sub_resource type="Resource" id="Resource_54hey"]
+script = ExtResource("2_fxh7q")
+tag = "_PARSE_PROPERTY_"
+comment_handling = 0
+action_method = "_get_parse_property"
+prefix_handling = 0
+additional_indent = 0
+suffix_handling = 0
+
+[resource]
+script = ExtResource("1_0kusa")
+template = "generator/script_templates/InspectorArchitectObjectEditorTemplate.gd"
+comment_start = "#"
+comment_error_messages = true
+template_actions = Array[ExtResource("2_fxh7q")]([SubResource("Resource_x6kyc"), SubResource("Resource_vloe5"), SubResource("Resource_lgbvf"), SubResource("Resource_w7sv4"), SubResource("Resource_1onc5"), SubResource("Resource_msgmg"), SubResource("Resource_gmu4u"), SubResource("Resource_54hey")])
