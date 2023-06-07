@@ -137,8 +137,12 @@ static func flags_to_string(dict: Dictionary, value: int, reverse: bool = true) 
 		enum_values.reverse()
 	return " | ".join(enum_values) if enum_values.size() > 0 else enum_to_string(dict, 0)
 
+const Utils := preload("InspectorArchitectUtils.gd")
+
 class Types:
 	
-	const InpectorPlugin := preload("InspectorArchitectInspectorPlugin.gd")
+	const InspectorStructure := preload("InspectorStructure.gd")
+	
+	const InspectorPlugin := preload("InspectorArchitectInspectorPlugin.gd")
 	
 	

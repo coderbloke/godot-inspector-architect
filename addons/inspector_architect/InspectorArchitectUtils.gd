@@ -1,0 +1,220 @@
+@tool
+extends Object
+
+# Source: editor_property_name_processor.cpp / EditorPropertyNameProcessor::EditorPropertyNameProcessor()
+const capitalize_string_remaps = {
+	"2d": "2D",
+	"3d": "3D",
+	"aa": "AA",
+	"aabb": "AABB",
+	"adb": "ADB",
+	"ao": "AO",
+	"api": "API",
+	"apk": "APK",
+	"arm32": "arm32",
+	"arm64": "arm64",
+	"arm64-v8a": "arm64-v8a",
+	"armeabi-v7a": "armeabi-v7a",
+	"arvr": "ARVR",
+	"astc": "ASTC",
+	"bbcode": "BBCode",
+	"bg": "BG",
+	"bidi": "BiDi",
+	"bp": "BP",
+	"bpc": "BPC",
+	"bpm": "BPM",
+	"bptc": "BPTC",
+	"bvh": "BVH",
+	"ca": "CA",
+	"ccdik": "CCDIK",
+	"cd": "CD",
+	"cpu": "CPU",
+	"csg": "CSG",
+	"db": "dB",
+	"dof": "DoF",
+	"dpi": "DPI",
+	"dtls": "DTLS",
+	"eol": "EOL",
+	"erp": "ERP",
+	"etc": "ETC",
+	"etc2": "ETC2",
+	"fabrik": "FABRIK",
+	"fbx": "FBX",
+	"fbx2gltf": "FBX2glTF",
+	"fft": "FFT",
+	"fg": "FG",
+	"filesystem": "FileSystem",
+	"fov": "FOV",
+	"fps": "FPS",
+	"fs": "FS",
+	"fsr": "FSR",
+	"fxaa": "FXAA",
+	"gdscript": "GDScript",
+	"ggx": "GGX",
+	"gi": "GI",
+	"gl": "GL",
+	"glb": "GLB",
+	"gles2": "GLES2",
+	"gles3": "GLES3",
+	"gltf": "glTF",
+	"gpu": "GPU",
+	"gui": "GUI",
+	"guid": "GUID",
+	"hdr": "HDR",
+	"hidpi": "hiDPI",
+	"hipass": "High-pass",
+	"hl": "HL",
+	"hsv": "HSV",
+	"html": "HTML",
+	"http": "HTTP",
+	"id": "ID",
+	"ids": "IDs",
+	"igd": "IGD",
+	"ik": "IK",
+	"image@2x": "Image @2x",
+	"image@3x": "Image @3x",
+	"iod": "IOD",
+	"ios": "iOS",
+	"ip": "IP",
+	"ipad": "iPad",
+	"iphone": "iPhone",
+	"ipv6": "IPv6",
+	"ir": "IR",
+	"itunes": "iTunes",
+	"jit": "JIT",
+	"k1": "K1",
+	"k2": "K2",
+	"kb": "(KB)", # Unit.
+	"lcd": "LCD",
+	"ldr": "LDR",
+	"lod": "LOD",
+	"lods": "LODs",
+	"lowpass": "Low-pass",
+	"macos": "macOS",
+	"mb": "(MB)", # Unit.
+	"mjpeg": "MJPEG",
+	"mms": "MMS",
+	"ms": "(ms)", # Unit
+	"msaa": "MSAA",
+	"msdf": "MSDF",
+	# Not used for now as AudioEffectReverb has a `msec` property.
+	#"msec": "(msec)", // Unit.
+	"navmesh": "NavMesh",
+	"nfc": "NFC",
+	"ok": "OK",
+	"opengl": "OpenGL",
+	"opentype": "OpenType",
+	"openxr": "OpenXR",
+	"osslsigncode": "osslsigncode",
+	"pck": "PCK",
+	"png": "PNG",
+	"po2": "(Power of 2)", # Unit.
+	"ppc32": "ppc32",
+	"ppc64": "ppc64",
+	"pvrtc": "PVRTC",
+	"pvs": "PVS",
+	"rcedit": "rcedit",
+	"rcodesign": "rcodesign",
+	"rgb": "RGB",
+	"rid": "RID",
+	"rmb": "RMB",
+	"rpc": "RPC",
+	"rv64": "rv64",
+	"s3tc": "S3TC",
+	"scp": "SCP",
+	"sdf": "SDF",
+	"sdfgi": "SDFGI",
+	"sdk": "SDK",
+	"sec": "(sec)", # Unit.
+	"signtool": "signtool",
+	"sms": "SMS",
+	"srgb": "sRGB",
+	"ssao": "SSAO",
+	"ssh": "SSH",
+	"ssil": "SSIL",
+	"ssl": "SSL",
+	"sss": "SSS",
+	"stderr": "stderr",
+	"stdout": "stdout",
+	"sv": "SV",
+	"svg": "SVG",
+	"taa": "TAA",
+	"tcp": "TCP",
+	"tls": "TLS",
+	"ui": "UI",
+	"uri": "URI",
+	"url": "URL",
+	"urls": "URLs",
+	"us": "(µs)", # Unit.
+	"usb": "USB",
+	"usec": "(µsec)", # Unit.
+	"uuid": "UUID",
+	"uv": "UV",
+	"uv1": "UV1",
+	"uv2": "UV2",
+	"uwp": "UWP",
+	"vector2": "Vector2",
+	"vpn": "VPN",
+	"vram": "VRAM",
+	"vrs": "VRS",
+	"vsync": "V-Sync",
+	"wap": "WAP",
+	"webp": "WebP",
+	"webrtc": "WebRTC",
+	"websocket": "WebSocket",
+	"wine": "wine",
+	"wifi": "Wi-Fi",
+	"x86": "x86",
+	"x86_32": "x86_32",
+	"x86_64": "x86_64",
+	"xr": "XR",
+	"xray": "X-Ray",
+	"xy": "XY",
+	"xz": "XZ",
+	"yz": "YZ",
+}
+
+# Source: editor_property_name_processor.cpp / stop_words
+const stop_words: PackedStringArray = [
+		"a",
+		"an",
+		"and",
+		"as",
+		"at",
+		"by",
+		"for",
+		"in",
+		"not",
+		"of",
+		"on",
+		"or",
+		"over",
+		"per",
+		"the",
+		"then",
+		"to",
+	]
+
+static func capitalize_property_name(name: String) -> String:
+	# Source: editor_property_name_processor.cpp / EditorPropertyNameProcessor::_capitalize_name
+	var parts = name.split("_", false);
+	for i in parts.size():
+		# Articles/conjunctions/prepositions which should only be capitalized when not at beginning and end.
+		if i > 0 and i + 1 < parts.size() and stop_words.find(parts[i]) != -1:
+			continue
+		if capitalize_string_remaps.has(parts[i]):
+			parts[i] = capitalize_string_remaps[parts[i]]
+		else:
+			parts[i] = parts[i].capitalize();
+	var capitalized = " ".join(parts);
+	return capitalized
+
+static func property_path_matches(property_path: String, filter: String) -> bool:
+	if property_path.findn(filter) != -1:
+		return true
+
+	var sections := property_path.split("/");
+	for i in sections.size():
+		if filter.is_subsequence_ofn(capitalize_property_name(sections[i])):
+			return true
+	return false

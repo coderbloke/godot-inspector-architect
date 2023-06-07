@@ -1,7 +1,7 @@
 @tool
 extends EditorPlugin
 
-var inspector_plugin = InspectorArchitect.Types.InpectorPlugin.new()
+var inspector_plugin = InspectorArchitect.Types.InspectorPlugin.new()
 
 func _enter_tree():
 	inspector_plugin.main_plugin = self
