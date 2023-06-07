@@ -38,7 +38,6 @@ func _property_list_to_table(property_list: Array[Dictionary]):
 	for p in property_list:
 		var indent := ""
 		var level: int = p.get("level", 0)
-		print(p)
 		var row: PackedStringArray = [
 			indent + p.name,
 			p["class_name"],
