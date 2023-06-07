@@ -15,6 +15,9 @@ Driving force, inspiration:
   Maybe this one will turn into similar.
 
 First goal:
-- Achieve something like this... Script snippets injected to the property parsing process, when Inspector is calling the InspectorPlugin.<br>
-  All quickly specified in a resource editor:  
+- Achieve something like on the below image. Script snippets injected to the property parsing process, when Inspector is calling the InspectorPlugin. Then inject control with it + provide shortcuts for adding buttons for example to trigger functions. The continue with exchanging property editor control.<br>
+  All quickly specified in a resource editor.<br>
+  <br>
+  But see Devlog: [Devlog](https://github.com/coderbloke/godot-inspector-architect/discussions/14)<br>
+  <br>
 ![Godot_v4 0 3-stable_win64_ZVkuuO1viY](https://github.com/coderbloke/godot-inspector-architect/assets/75695649/9763562f-6cbe-4171-8ad9-63af4fc5e7a7)
