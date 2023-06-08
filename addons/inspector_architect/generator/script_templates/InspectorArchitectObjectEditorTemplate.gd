@@ -1,13 +1,15 @@
 @tool
-extends InspectorObjectEditor
+extends RefCounted
+
+var inspector: EditorInspectorPlugin
 
 # _DECLARATIONS_
 
 func _init():
-	# _INITIALIZATION_
+	# _INITIALIZATION_ # generated code
 	pass
 	
-func _can_handle(object: Object) -> bool:
+static func _can_handle(object: Object) -> bool:
 	# _CAN_HANDLE_
 	return false
 
