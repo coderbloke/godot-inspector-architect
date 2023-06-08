@@ -1,8 +1,21 @@
 @tool
 class_name InspectorObjectEditorGenerator extends Resource
 
-@export var code_generator_specification: CodeGeneratorSpecification
-@export var inspector_specification: InspectorSpecification
+@export var code_generator_specification: CodeGeneratorSpecification:
+	set(value):
+		if code_generator_specification != null:
+			code_generator_specification.changed.disconnect(emit_changed)
+		code_generator_specification = value
+		if code_generator_specification != null:
+			code_generator_specification.changed.connect(emit_changed)
+			
+@export var inspector_specification: InspectorSpecification:
+	set(value):
+		if inspector_specification != null:
+			inspector_specification.changed.disconnect(emit_changed)
+		inspector_specification = value
+		if inspector_specification != null:
+			inspector_specification.changed.connect(emit_changed)
 
 @export var trigger_update: bool = false:
 	set(new_value):
