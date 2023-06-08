@@ -62,27 +62,32 @@ static func _process_line(tracking: _Tracking, line: String):
 			var additional_ident := "\t".repeat(action.additional_indent)
 			if tracking.context.has_method(action.action_method):
 				var output_lines := (tracking.context.call(action.action_method) as String).split("\n")
+				if output_lines.size() == 0:
+					output_lines = [""]
 				for i in output_lines.size():
-					var output_line := first_line_prefix if i == 0 else prefix
-					if i > 0: output_line += additional_ident
-					output_line += output_lines[i]
+					var output_line = output_lines[i]
+					# First handle suffixes, as they can rely on, wheteher the line is empty or note
 					match action.suffix_handling:
 						SuffixHandling.PUT_TO_END_OF_LAST_LINE:
 							if i == output_lines.size() - 1:
-								output_line += suffix
+								output_line += suffix.strip_edges(true, false) if output_line.is_empty() else suffix
 						SuffixHandling.PUT_TO_NEW_LINE:
 							if i == output_lines.size() - 1:
-								if output_line.ends_with("\n"): output_line += suffix
-								else: output_line += "\n" + suffix
+								if not output_line.ends_with("\n"):
+									output_line += "\n"
+								output_line += prefix + suffix.strip_edges(true, false)
 						SuffixHandling.PUT_TO_NEW_LINE_WITH_ADDITIONAL_IDENT:
 							if i == output_lines.size() - 1:
-								if output_line.ends_with("\n"): output_line += additional_ident + suffix
-								else: output_line += "\n" + additional_ident + suffix
+								if not output_line.ends_with("\n"):
+									output_line += "\n"
+								output_line += prefix + additional_ident + suffix.strip_edges(true, false)
 						SuffixHandling.KEEP_IN_FIRST_LINE:
 							if i == 0:
 								output_line += suffix
 						SuffixHandling.REPEAT:
-							output_line += suffix
+							output_line += suffix.strip_edges(true, false) if output_line.is_empty() else suffix
+					# Add prefixes to the line, which already has the suffix
+					output_line = (first_line_prefix if i == 0 else prefix) + (additional_ident if i > 0 else "") + output_line
 					if i == 0:
 						output = output_line
 					else:
