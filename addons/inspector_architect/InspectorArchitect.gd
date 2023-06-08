@@ -139,10 +139,16 @@ static func flags_to_string(dict: Dictionary, value: int, reverse: bool = true) 
 
 const Utils := preload("InspectorArchitectUtils.gd")
 
+class Controls:
+	
+	const PropertyCodeEditor := preload("editor_property_controls/PropertyCodeEditor.gd")
+
 class Types:
 	
 	const InspectorStructure := preload("InspectorStructure.gd")
 	
 	const InspectorPlugin := preload("InspectorArchitectInspectorPlugin.gd")
+	
+	const DelegateEditorProperty := preload("editor_property_controls/DelegateEditorProperty.gd")
 	
 	

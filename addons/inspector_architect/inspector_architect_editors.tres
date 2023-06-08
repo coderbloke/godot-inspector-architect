@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="InspectorObjectEditorSpecification" load_steps=6 format=3 uid="uid://cjkqkvqvrpt5a"]
+
+[ext_resource type="Script" path="res://addons/inspector_architect/specification/InspectorObjectEditorSpecification.gd" id="1_cx2t2"]
+[ext_resource type="Script" path="res://addons/inspector_architect/specification/InspectorObjectFilter.gd" id="1_t23g1"]
+[ext_resource type="Script" path="res://addons/inspector_architect/specification/InspectorParseAction.gd" id="2_old7v"]
+
+[sub_resource type="Resource" id="Resource_jvoyf"]
+script = ExtResource("1_t23g1")
+accepted_classes = PackedStringArray("")
+acceptance_check = "if object is InspectorParseAction:
+	return true
+if object is InspectorObjectFilter:
+	return true
+if object is InspectorObjectEditorSpecification:
+	return true"
+
+[sub_resource type="Resource" id="Resource_eytt1"]
+script = ExtResource("2_old7v")
+declarations = ""
+initialization = ""
+action = "if name in [\"declarations\", \"initialization\", \"action\", \"acceptance_check\"]:
+	var code_editor := InspectorArchitect.Controls.PropertyCodeEditor.new()
+	var ep := InspectorArchitect.Types.DelegateEditorProperty.new(code_editor, false)
+	inspector.add_property_editor(name, ep)
+	ep.visible = false
+	inspector.add_custom_control(code_editor)
+	return true
+"
+
+[resource]
+script = ExtResource("1_cx2t2")
+declarations = ""
+initialization = ""
+object_filter = SubResource("Resource_jvoyf")
+parse_actions = Array[ExtResource("2_old7v")]([SubResource("Resource_eytt1")])

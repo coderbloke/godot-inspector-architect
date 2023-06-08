@@ -1,39 +1,8 @@
-[gd_resource type="Resource" script_class="InspectorSpecification" load_steps=10 format=3 uid="uid://bdvmtuj1l8rbm"]
+[gd_resource type="Resource" script_class="InspectorSpecification" load_steps=3 format=3 uid="uid://bdvmtuj1l8rbm"]
 
 [ext_resource type="Script" path="res://addons/inspector_architect/specification/InspectorSpecification.gd" id="1_1x0q6"]
-[ext_resource type="Script" path="res://addons/inspector_architect/specification/InspectorObjectFilter.gd" id="3_jaumh"]
-[ext_resource type="Script" path="res://addons/inspector_architect/specification/InspectorInsertPosition.gd" id="4_a1laa"]
-[ext_resource type="Script" path="res://addons/inspector_architect/specification/InspectorObjectEditorSpecification.gd" id="4_aoguv"]
-[ext_resource type="Script" path="res://addons/inspector_architect/specification/InspectorParseAction.gd" id="5_n4nkb"]
-
-[sub_resource type="Resource" id="Resource_qvnub"]
-script = ExtResource("3_jaumh")
-accepted_classes = PackedStringArray("NominatimTestPanel")
-acceptance_check = ""
-
-[sub_resource type="Resource" id="Resource_4rscr"]
-script = ExtResource("4_a1laa")
-position = 0
-anchor_type = 3
-anchor = "trigger_query"
-
-[sub_resource type="Resource" id="Resource_vbd5b"]
-script = ExtResource("5_n4nkb")
-declarations = "var query_trigger_button: Button = Button.new()"
-initialization = "query_trigger_button.title = \"Trigger query\"
-query_trigger_button.button_pressed.connect(
-	func (): object.do_query()
-)"
-action_trigger = SubResource("Resource_4rscr")
-action = "query_trigger_button.disabled = object.overpass_query_builder == null or object.overpass_query == null"
-
-[sub_resource type="Resource" id="Resource_lxqj3"]
-script = ExtResource("4_aoguv")
-declarations = ""
-initialization = ""
-object_filter = SubResource("Resource_qvnub")
-parse_actions = Array[ExtResource("5_n4nkb")]([SubResource("Resource_vbd5b")])
+[ext_resource type="Resource" uid="uid://cjkqkvqvrpt5a" path="res://addons/inspector_architect/inspector_architect_editors.tres" id="1_hjv5n"]
 
 [resource]
 script = ExtResource("1_1x0q6")
-plugins = Array[ExtResource("4_aoguv")]([SubResource("Resource_lxqj3")])
+plugins = Array[Resource("res://addons/inspector_architect/specification/InspectorObjectEditorSpecification.gd")]([ExtResource("1_hjv5n")])

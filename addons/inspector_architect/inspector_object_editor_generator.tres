@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="InspectorObjectEditorGenerator" load_steps=4 format=3 uid="uid://dgkv0pum8gfic"]
+
+[ext_resource type="Resource" uid="uid://rqvqyh5lmwh6" path="res://addons/inspector_architect/generator/inspector_object_editor_generator_specification.tres" id="1_0grns"]
+[ext_resource type="Script" path="res://addons/inspector_architect/InspectorObjectEditorGenerator.gd" id="1_eyjja"]
+[ext_resource type="Resource" uid="uid://bdvmtuj1l8rbm" path="res://addons/inspector_architect/inspector_specification.tres" id="2_g5x2x"]
+
+[resource]
+script = ExtResource("1_eyjja")
+code_generator_specification = ExtResource("1_0grns")
+inspector_specification = ExtResource("2_g5x2x")
+trigger_update = false
